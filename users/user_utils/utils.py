@@ -61,7 +61,7 @@ class SearchUserInDBByUsername(IUserDetails):
         return data
     
 class SearchUserInDBByUserID(IUserDetails):
-    def getUserInfo(self, q_params):
+    def getUserInfo(self, q_params, get_password=False):
         user_id = q_params.get('user_id')
         user_details = Users.query.filter_by(id=user_id).first()
 
@@ -70,16 +70,19 @@ class SearchUserInDBByUserID(IUserDetails):
         data = {
             'id': user_details.id,
             'name': user_details.name,
+            'username': user_details.username,
             'email': user_details.email,
             'created_on': user_details.created_on,
-            'username': user_details.username
+            'phone_number': user_details.phone_number
         }
+        if get_password:
+            data.update({'password': user_details.password})
         return data
 
 def fetch_user_details(q_params: dict) -> tuple[str, int]:
     handler_obj: IUserDetails = Builder().createUserDetailsObj(q_params)
     response = handler_obj.getUserInfo(q_params)
-    print(f'fetch user details in user service >> {response}', flush=True)
+
     return response
 
 def make_user(data):
@@ -91,13 +94,27 @@ def make_user(data):
     except Exception as e:
         return f'Could not create user', e
     
-def update_user_data(user_id, data=None):
-    if not data:
-        row_to_delete = Users.query.filter(id=user_id).first()
-        if row_to_delete:
-            db.session.delete(row_to_delete)
-            db.session.commit()
-            return "User Deleted Successfully", 200
-    
-    print(data, flush=True)
+def delete_user(user_id):
+    row_to_delete = Users.query.filter_by(id=user_id).first()
+    if row_to_delete:
+        db.session.delete(row_to_delete)
+        db.session.commit()
+        return "User Deleted Successfully", 200
+    return "User not found", 404
             
+def update_user_data(user_id, data):
+    user_obj = SearchUserInDBByUserID()
+    actual_user_data = user_obj.getUserInfo({'user_id': user_id}, get_password=True)
+
+    row_to_update = Users.query.filter_by(id=user_id).first()
+    if row_to_update:
+        row_to_update.name = data.get('name', actual_user_data.get('name'))
+        row_to_update.username = data.get('username', actual_user_data.get('username'))
+        row_to_update.email = data.get('email', actual_user_data.get('email'))
+        row_to_update.phone_number = data.get('phone_number', actual_user_data.get('phone_number'))
+        row_to_update.password = data.get('password', actual_user_data.get('password'))
+        db.session.commit()
+        return "User details updated", 200
+    
+    return "User not found", 404
+        

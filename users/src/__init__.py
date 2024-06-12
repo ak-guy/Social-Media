@@ -16,7 +16,6 @@ def create_app():
     return app
 
 def create_db(app):
-    print(path)
-    if not path.exists('/users/' + DB_NAME):
-        db.create_all(app=app)
+    with app.app_context():
+        db.create_all()
         print('Created Database!')

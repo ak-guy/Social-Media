@@ -1,6 +1,8 @@
 import requests
 import os
 from dotenv import load_dotenv
+import ast
+import json
 
 load_dotenv()
 
@@ -20,6 +22,10 @@ def get_user_details(pk: int):
 
 def update_resource(user_id, data, method):
     url = f'http://localhost:{USER_PORT_NUMBER}/update-user/{user_id}'
+
+    if data:
+        data = json.dumps(ast.literal_eval(data.decode('ascii')))
+
     if method == 'PATCH':
         conn = requests.patch(url, json=data)
     else:

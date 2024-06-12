@@ -3,8 +3,9 @@ from ast import literal_eval
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
-from user_utils.utils import fetch_user_details, make_user, update_user_data
+from user_utils.utils import fetch_user_details, make_user, update_user_data, delete_user
 from src import create_app
+import json
 
 
 # app = Flask(__name__)
@@ -39,11 +40,14 @@ def get_user():
 @app.route('/update-user/<int:user_id>', methods=('PATCH', 'DELETE'))
 def update_user(user_id):
     if request.method == 'PATCH':
-        data = request.get_json()
-        update_user_data(user_id, data)
+        data = json.loads(request.get_json())
+        print(f"data type = {type(data)}, actual_data = {data}")
+        msg, status = update_user_data(user_id, data)
+        return msg, status
     
     if request.method == 'DELETE':
-        update_user_data(user_id)
+        msg, status = delete_user(user_id)
+        return msg, status
 
 if __name__ == '__main__':
     # with app.app_context():
