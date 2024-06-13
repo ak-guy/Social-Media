@@ -1,9 +1,10 @@
-from flask import Flask, request
-from ast import literal_eval
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
-from user_utils.utils import fetch_user_details, make_user, update_user_data, delete_user
+from flask import request
+from user_utils.utils import (
+    fetch_user_details, 
+    make_user, 
+    update_user_data, 
+    delete_user
+)
 from src import create_app
 import json
 
@@ -16,7 +17,7 @@ import json
 app = create_app()
 
 @app.route('/signup-user', methods=('POST','GET'))
-def create_user():
+def signup():
     if request.method == 'GET':
         return "Get request working", 200
     
@@ -48,6 +49,8 @@ def update_user(user_id):
     if request.method == 'DELETE':
         msg, status = delete_user(user_id)
         return msg, status
+    
+
 
 if __name__ == '__main__':
     # with app.app_context():

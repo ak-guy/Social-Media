@@ -1,12 +1,9 @@
-from flask import Flask, request, Response
-from pydantic import (
-    BaseModel, 
-    EmailStr,
-    field_validator
-)
+from flask import Flask, request
 import ast
 from user_svc.user_comm import create_user, get_user_details, update_resource
 from user_svc.utils import user_details_handler
+from auth_svc.auth_comm import make_login_request
+from validation import User
 import json
 
 app = Flask(__name__)
@@ -20,32 +17,11 @@ curl -X POST -H "Content-Type: text/html;" http://127.0.0.1:8080/signup -d "{'na
 curl -X GET -H "Content-Type: text/html;" "http://127.0.0.1:8080/get-user?name=arpit&limit=1"
 
 3. testing deleting and updating user
-curl -X PATCH -H "Content-Type: text/html;" "http://127.0.0.1:8080/update_user/1 -d "{'name': 'Arpit Kumar'}"
+curl -X PATCH -H "Content-Type: text/html;" "http://127.0.0.1:8080/update_user/1" -d "{'name': 'Arpit Kumar'}"
+
+4. testing login
+curl -X POST -H "Content-Type: text/html;" "http://127.0.0.1:8080/login" -d "{'username': 'ak_guy', 'password': 'test1234'}"
 '''
-
-class User(BaseModel):
-    name: str
-    username: str
-    email: EmailStr
-    password: str
-    phone_number: str
-
-    @field_validator('password')
-    @classmethod
-    def validate_password(cls, value):
-        if len(value) < 8:
-            raise ValueError("Password Length must be greater that 8")
-        
-        return value
-        
-    @field_validator('phone_number')
-    @classmethod
-    def validate_phone_number(cls, value):
-        country_code, actual_number = value.split('-')
-        if len(actual_number) != 10:
-            raise ValueError("Phone number should be exactly 10 digits")
-        
-        return value
         
 
 @app.route("/signup", methods=("POST",))
@@ -58,6 +34,23 @@ def signup_user():
             return {'Success': True, 'Message': 'User created'}, 201
         
         return {'Success': False, 'Message': 'User could not be created'}, 401
+    
+@app.route('/login', methods=['POST'])
+def login_user():
+    data = ast.literal_eval(request.data.decode('ascii'))
+    has_id = 'username' in data or 'email' in data or 'phone_number' in data
+    has_password = True if data.get('password') else False
+    
+    if not has_id or not has_password:
+        return 'Username or Password is missing', 404
+    
+    token, err = make_login_request(data)
+    print(f"token generated >>> {token}", flush=True)
+    print(err, flush=True)
+    if not err:
+        return token
+    
+    return err
 
 @app.route("/update_user/<int:user_id>", methods=("PATCH", "DELETE"))
 def update_user(user_id):
