@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 from models import Users
 from src import db
 import json
-
+# from sqlalchemy.sql.elements import literal_column
+from sqlalchemy import literal_column, select
 class Builder:
     def createUserDetailsObj(self, q_params) -> IUserDetails:
         if 'user_id' in q_params:
@@ -117,4 +118,15 @@ def update_user_data(user_id, data):
         return "User details updated", 200
     
     return "User not found", 404
-        
+
+class IUserValidator:
+    pass
+
+def check_user(user_column: str, value: str, password: str):
+    try:
+        # does not work (check login api)
+        user_exists = db.session.execute(db.select(Users).filter_by(literal_column(user_column)==value)).scalar_one()
+        return user_exists
+    except Exception as e:
+        print(f'Exception while getting user {e}')
+        return False

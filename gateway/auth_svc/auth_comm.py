@@ -23,6 +23,7 @@ def make_login_request(data):
 
     auth = (username, password)
     url = f'http://localhost:{AUTH_PORT_NUMBER}/user-login'
+    print(f'url = {url}')
 
     # will ping to auth service to get jwt token
     conn = requests.post(

@@ -37,20 +37,21 @@ def signup_user():
     
 @app.route('/login', methods=['POST'])
 def login_user():
-    data = ast.literal_eval(request.data.decode('ascii'))
-    has_id = 'username' in data or 'email' in data or 'phone_number' in data
-    has_password = True if data.get('password') else False
-    
-    if not has_id or not has_password:
-        return 'Username or Password is missing', 404
-    
-    token, err = make_login_request(data)
-    print(f"token generated >>> {token}", flush=True)
-    print(err, flush=True)
-    if not err:
-        return token
-    
-    return err
+    if request.method == 'POST':
+        data = ast.literal_eval(request.data.decode('ascii'))
+        has_id = 'username' in data or 'email' in data or 'phone_number' in data
+        has_password = True if data.get('password') else False
+        
+        if not has_id or not has_password:
+            return 'Username or Password is missing', 404
+        
+        token, err = make_login_request(data)
+        print(f"token generated >>> {token}", flush=True)
+        print(err, flush=True)
+        if not err:
+            return token
+        
+        return err
 
 @app.route("/update_user/<int:user_id>", methods=("PATCH", "DELETE"))
 def update_user(user_id):

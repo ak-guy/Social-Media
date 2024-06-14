@@ -3,7 +3,8 @@ from user_utils.utils import (
     fetch_user_details, 
     make_user, 
     update_user_data, 
-    delete_user
+    delete_user,
+    check_user
 )
 from src import create_app
 import json
@@ -28,7 +29,7 @@ def signup():
             return 'Error', 404
         return 'Created', 201
     
-@app.route('/get-users')
+@app.route('/get-users', methods=('GET', 'POST',))
 def get_user():
     if request.method == 'GET':
         q_params = request.args
@@ -37,6 +38,18 @@ def get_user():
         if not response:
             return 'Could not fetch user', 404
         return response, 200
+    if request.method == 'POST':
+        print(f'post hit to /get-users in user svc')
+        auth = request.authorization
+        user_column, value = auth.username.split('---')
+        password = auth.password
+        does_exists = check_user(user_column, value, password)
+        print(f'does_exists = {does_exists}', flush=True)
+        if does_exists:
+            return "User Exists", 200
+        
+        return "User does not exist", 404
+        
 
 @app.route('/update-user/<int:user_id>', methods=('PATCH', 'DELETE'))
 def update_user(user_id):
